@@ -5,6 +5,9 @@ import { MongoClient } from 'mongodb';
 const app = express();
 const port = 3000;
 
+//EJS Templating Engine
+app.set('view engine', 'ejs');
+
 // MongoDB Connection
 const url = "mongodb://localhost:27017";
 const dbName = "studentDB";
@@ -12,33 +15,25 @@ const dbName = "studentDB";
 //crete a new MongoClient
 const client = new MongoClient(url);
 
-// Set EJS as the templating engine
-app.set('view engine', 'ejs');
+let db;
 
-// Middleware to parse JSON
-app.use(express.json());
+async function connectToDB() {
+    await client.connect();
+    console.log("Connected correctly to server");
+    db = client.db(dbName);
+}
 
-//Routes
-app.get('/data',async (req , res)=>{
-    try{
-        // Connect to MongoDB
-        await client.connect();
-        console.log("Connected correctly to server");
+app.get('/api', async (req, res) => {
+    await connectToDB(); // Ensure DB connection
+    const data = await db.collection('students').find({}).toArray();
+    res.json(data);
+});
 
-        const db = client.db(dbName);
-        const collection = db.collection('students');
-
-        // Fetch all documents
-        const data = await collection.find({ age: { $gt:29 }}).toArray();
-
-        // Send data to EJS template
-        res.render('index', {students: data});
-
-    }catch(err){
-        console.error(err);
-        res.status(500).send({error: 'An error occurred'});
-    }
-})
+app.get('/ui', async (req, res) => {
+    await connectToDB(); // Ensure DB connection
+    const data = await db.collection('students').find({}).toArray();
+    res.render('index', { students: data });
+});
 
 // Start the server
 app.listen(port, () => {
