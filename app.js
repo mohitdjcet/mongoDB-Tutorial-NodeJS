@@ -5,6 +5,8 @@ import { MongoClient } from 'mongodb';
 const app = express();
 const port = 3000;
 
+app.use(express.json());
+
 // MongoDB Connection
 const url = "mongodb://localhost:27017";
 const dbName = "studentDB";
@@ -12,31 +14,39 @@ const dbName = "studentDB";
 //crete a new MongoClient
 const client = new MongoClient(url);
 
-// Middleware to parse JSON
-app.use(express.json());
+let db;
 
-//Routes
-app.get('/data',async (req , res)=>{
-    try{
-        // Connect to MongoDB
-        await client.connect();
-        console.log("Connected correctly to server");
+async function connectToDB() {
+    await client.connect();
+    console.log("Connected correctly to server");
+    db = client.db(dbName);
+}
 
-        const db = client.db(dbName);
-        const collection = db.collection('students');
+app.get('/api', async (req, res) => {
+    const data = await db.collection('students').find({}).toArray();
+    res.json(data);
+});
 
-        // Fetch all documents
-        const data = await collection.find({}).toArray();
+app.post('/add-student', async (req, res) => {
+    const { Name, age, city} = req.body;
 
-        res.json(data);
-
-    }catch(err){
-        console.error(err);
-        res.status(500).send({error: 'An error occurred'});
+    //Basic validation
+    if (!Name || !age || !city) {
+        return res.status(400).json({ error: 'Please provide Name, age, and city' });
     }
-})
+
+    // Insert the new student into the database
+    const result = await db.collection('students').insertOne({ Name, age, city });
+
+    res.status(201).json({
+        message: 'Student added successfully',
+        studentId: result.insertedId
+    })
+});
+
 
 // Start the server
-app.listen(port, () => {
+app.listen(port, async () => {
+    await connectToDB(); // Connect to DB before starting the server
     console.log(`Server is running on http://localhost:${port}`);
 });
