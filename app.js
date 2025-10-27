@@ -12,6 +12,9 @@ const dbName = "studentDB";
 //crete a new MongoClient
 const client = new MongoClient(url);
 
+// Set EJS as the templating engine
+app.set('view engine', 'ejs');
+
 // Middleware to parse JSON
 app.use(express.json());
 
@@ -26,9 +29,10 @@ app.get('/data',async (req , res)=>{
         const collection = db.collection('students');
 
         // Fetch all documents
-        const data = await collection.find({}).toArray();
+        const data = await collection.find({ age: { $gt:29 }}).toArray();
 
-        res.json(data);
+        // Send data to EJS template
+        res.render('index', {students: data});
 
     }catch(err){
         console.error(err);
