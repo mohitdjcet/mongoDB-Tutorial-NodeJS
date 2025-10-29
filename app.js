@@ -96,6 +96,25 @@ app.patch("/update-student/:id", async (req, res) => {
     }
 })
 
+app.delete("/delete-student/:id", async (req, res) => {
+    const id = req.params.id;
+
+    //Step-1: Validate the ID
+    if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ error: 'Invalid student ID' });
+    }
+
+    //step-2: Delete the student
+    const result = await db.collection('students').deleteOne({ _id: new ObjectId(id) });
+
+    //step-3: Check if a student was deleted
+    if ( result.deletedCount === 1) {
+        res.json({ message: 'Student deleted successfully' });
+    } else {
+        res.status(404).json({ error: 'Student not found' });
+    }
+});
+
 // Start the server
 app.listen(port, async () => {
     await connectToDB(); // Connect to DB before starting the server
