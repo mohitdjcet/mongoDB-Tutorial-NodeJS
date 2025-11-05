@@ -1,32 +1,18 @@
-import mongoose from "mongoose";
+import express from 'express';
+import connectDB from './config/db.js';
+import UserRoutes from './routes/userRoutes.js';
 
-const dbConnection = async () => {
-    try{
-        await mongoose.connect("mongodb://localhost:27017/studentDB");
-        console.log("Database connected successfully");
-    } catch (error) {
-        console.error("Database connection error:", error);
-    }
-}
-dbConnection();
+const app = express();
 
-// Define a schema for Student
-const studentSchema = new mongoose.Schema({
-    name: String,
-    age: Number,
-    city: String
+// Connect to the database
+connectDB();
+
+// Middleware to parse JSON requests
+app.use(express.json());
+
+// User routes
+app.use('/api', UserRoutes);
+
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
 });
-
-// Create a model for Student
-const studentModel = mongoose.model("students", studentSchema);
-
-//Fetch Data from DB
-const getStudents = async () => {
-    try {
-        const students = await studentModel.find({});
-        console.log("Students Data:", students);
-    } catch (error) {
-        console.error("Error fetching students:", error);
-    }
-}
-getStudents();
