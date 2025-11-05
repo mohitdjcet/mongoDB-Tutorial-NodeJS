@@ -24,3 +24,40 @@ export const createUser = async (req, res) => {
         res.status(500).json({ message: "Error creating user", error });
     }
 };
+
+//PUT API to update an existing user
+export const updateUserPut = async (req, res) => {
+    try{
+        const { id } = req.params;
+
+        const updatedUser = await User.findByIdAndUpdate(id,req.body,{
+            new: true, // return updated data
+            overwrite: true // overwrite the whole document
+        });
+        res.json({
+            message: "User updated successfully",
+            success: true,
+            data: updatedUser
+        })
+    } catch (error) {
+        res.status(500).json({ message: "Error updating user", error });
+    }
+};
+
+//PATCH API to partially update an existing user
+export const updateUserPatch = async (req, res) => {
+    try{
+        const { id } = req.params;
+
+        const updatedUser = await User.findByIdAndUpdate(id,req.body,{
+            new: true, // return updated data
+        });
+        res.json({
+            message: "User updated successfully(Patch)",
+            success: true,
+            data: updatedUser
+        })
+    } catch (error) {
+        res.status(500).json({ message: "Error updating user", error });
+    }
+};
