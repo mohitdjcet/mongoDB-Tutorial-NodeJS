@@ -1,5 +1,5 @@
 import express from 'express';
-import { getUser,createUser,updateUserPut,updateUserPatch } from '../controllers/userController.js';
+import { getUser,createUser,updateUserPut,updateUserPatch,deleteUser } from '../controllers/userController.js';
 
 const router = express.Router();
 
@@ -14,5 +14,8 @@ router.put('/users/:id', updateUserPut);
 
 //PATCH API to partially update an existing user
 router.patch('/users/:id', updateUserPatch);
+
+//Delete API to delete a user
+router.delete('/users/:id', deleteUser);
 
 export default router;

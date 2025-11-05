@@ -61,3 +61,27 @@ export const updateUserPatch = async (req, res) => {
         res.status(500).json({ message: "Error updating user", error });
     }
 };
+
+//DELETE API to delete a user
+export const deleteUser = async (req, res) =>{
+    try{
+        const { id } = req.params;
+
+        const deletedUser = await User.findByIdAndDelete(id);
+
+        if(!deletedUser){
+            return res.status(404).json({
+                message: "User not found",
+                success: false
+            });
+        }
+
+        res.json({
+            message: "User deleted successfully",
+            success: true,
+            data: deletedUser
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting user", error });
+    }
+};
