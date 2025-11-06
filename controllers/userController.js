@@ -30,10 +30,7 @@ export const updateUserPut = async (req, res) => {
     try{
         const { id } = req.params;
 
-        const updatedUser = await User.findByIdAndUpdate(id,req.body,{
-            new: true, // return updated data
-            overwrite: true // overwrite the whole document
-        });
+        const updatedUser = await User.findOneAndReplace({ _id: id }, req.body, { new: true });
         res.json({
             message: "User updated successfully",
             success: true,
