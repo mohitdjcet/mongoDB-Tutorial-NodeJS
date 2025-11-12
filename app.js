@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb";
 
-const url = "mongodb+srv://mohitdecodes:Qwerty123@cluster0.picomqh.mongodb.net/?appName=Cluster0"
+const url = "Test"
 const dbName = "StudentDB";
 
 async function connectDB(){
