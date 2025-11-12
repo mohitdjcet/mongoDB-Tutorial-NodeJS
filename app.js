@@ -1,42 +1,27 @@
-import express from 'express';
-import { MongoClient } from 'mongodb';
+import { MongoClient } from "mongodb";
 
-// Initialize Express app
-const app = express();
-const port = 3000;
+const url = "mongodb+srv://mohitdecodes:Qwerty123@cluster0.picomqh.mongodb.net/?appName=Cluster0"
+const dbName = "StudentDB";
 
-// MongoDB Connection
-const url = "mongodb://localhost:27017";
-const dbName = "studentDB";
-
-//crete a new MongoClient
-const client = new MongoClient(url);
-
-// Middleware to parse JSON
-app.use(express.json());
-
-//Routes
-app.get('/data',async (req , res)=>{
+async function connectDB(){
+    const client = new MongoClient(url);
     try{
-        // Connect to MongoDB
         await client.connect();
-        console.log("Connected correctly to server");
-
-        const db = client.db(dbName);
-        const collection = db.collection('students');
-
-        // Fetch all documents
-        const data = await collection.find({}).toArray();
-
-        res.json(data);
-
-    }catch(err){
-        console.error(err);
-        res.status(500).send({error: 'An error occurred'});
+        console.log("Connected to MongoDB");
+        return client;
+    } catch(err){
+        console.error("Connection failed", err);
     }
-})
+}
 
-// Start the server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});
+async function run(){
+   const client = await connectDB();
+   const db = client.db(dbName);
+   const collection = db.collection("Student");
+
+   const studentData = await collection.find({}).toArray();
+   console.log(studentData);
+
+}
+
+run();
