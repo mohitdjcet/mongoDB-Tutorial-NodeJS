@@ -1,42 +1,20 @@
 import express from 'express';
-import { MongoClient } from 'mongodb';
+import dotenv from 'dotenv';
 
-// Initialize Express app
+dotenv.config();
+
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
+const APP_NAME = process.env.APP_NAME || 'My App';
+const SECRET_KEY = process.env.SECRET_KEY
 
-// MongoDB Connection
-const url = "mongodb://localhost:27017";
-const dbName = "studentDB";
+app.get('/', (req, res) => {
+    res.send(`
+        <h1>Welcome to ${APP_NAME}</h1>
+        <p>Your secret key is: ${SECRET_KEY}</p>
+    `);
+});
 
-//crete a new MongoClient
-const client = new MongoClient(url);
-
-// Middleware to parse JSON
-app.use(express.json());
-
-//Routes
-app.get('/data',async (req , res)=>{
-    try{
-        // Connect to MongoDB
-        await client.connect();
-        console.log("Connected correctly to server");
-
-        const db = client.db(dbName);
-        const collection = db.collection('students');
-
-        // Fetch all documents
-        const data = await collection.find({}).toArray();
-
-        res.json(data);
-
-    }catch(err){
-        console.error(err);
-        res.status(500).send({error: 'An error occurred'});
-    }
-})
-
-// Start the server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`${APP_NAME} is running on http://localhost:${PORT}`);
 });
