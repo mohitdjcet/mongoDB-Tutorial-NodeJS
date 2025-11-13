@@ -1,42 +1,32 @@
 import express from 'express';
-import { MongoClient } from 'mongodb';
+import cookieParser from 'cookie-parser';
 
-// Initialize Express app
 const app = express();
-const port = 3000;
+app.use(cookieParser());
 
-// MongoDB Connection
-const url = "mongodb://localhost:27017";
-const dbName = "studentDB";
+app.get('/', (req, res) => {
+  res.send('Hello, Cokkies!');
+});
 
-//crete a new MongoClient
-const client = new MongoClient(url);
+app.get('/setCookie', (req, res) => {
+    res.cookie("username","Mohit Kumar",{
+        maxAge: 1000 * 60 * 2, // 2 Minutes
+        httpOnly: true,
+        sameSite: "strict"
+    });
+    res.send('Cookie has been set');
+});
 
-// Middleware to parse JSON
-app.use(express.json());
+app.get('/getCookie', (req, res) => {
+    const username = req.cookies.username;
+    res.send(`Username from cookie: ${username}`);
+});
 
-//Routes
-app.get('/data',async (req , res)=>{
-    try{
-        // Connect to MongoDB
-        await client.connect();
-        console.log("Connected correctly to server");
+app.get('/clearCookie', (req, res) => {
+    res.clearCookie("username");
+    res.send('Cookie has been cleared');
+});
 
-        const db = client.db(dbName);
-        const collection = db.collection('students');
-
-        // Fetch all documents
-        const data = await collection.find({}).toArray();
-
-        res.json(data);
-
-    }catch(err){
-        console.error(err);
-        res.status(500).send({error: 'An error occurred'});
-    }
-})
-
-// Start the server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+app.listen(3000, () => {
+  console.log('Server is running on http://localhost:3000');
 });
