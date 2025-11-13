@@ -1,42 +1,49 @@
 import express from 'express';
-import { MongoClient } from 'mongodb';
+import multer from 'multer';
+import path from 'path';
 
-// Initialize Express app
 const app = express();
-const port = 3000;
+const PORT = 3001;
 
-// MongoDB Connection
-const url = "mongodb://localhost:27017";
-const dbName = "studentDB";
 
-//crete a new MongoClient
-const client = new MongoClient(url);
-
-// Middleware to parse JSON
-app.use(express.json());
-
-//Routes
-app.get('/data',async (req , res)=>{
-    try{
-        // Connect to MongoDB
-        await client.connect();
-        console.log("Connected correctly to server");
-
-        const db = client.db(dbName);
-        const collection = db.collection('students');
-
-        // Fetch all documents
-        const data = await collection.find({}).toArray();
-
-        res.json(data);
-
-    }catch(err){
-        console.error(err);
-        res.status(500).send({error: 'An error occurred'});
+//Step-1: Store Configuration
+const storage = multer.diskStorage({
+    destination: function (req,file,cb){
+        cb(null, 'uploads/')
+    },
+    filename: function (req,file,cb){
+        const uniqueName = Date.now() + path.extname(file.originalname);
+        cb(null, uniqueName);
     }
 })
 
-// Start the server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+//Step-2: Upload Middleware
+const upload = multer({storage: storage});
+
+//Step-3 : Craete upload folder if not exists
+import fs from 'fs';
+if (!fs.existsSync('uploads')){
+    fs.mkdirSync('uploads');
+}
+
+//Step-4: Create Routes
+app.get('/', (req, res) => {
+    res.send(`
+        <h1>File Upload Server</h1>
+        <form method="POST" action="/upload" enctype="multipart/form-data">
+            <input type="file" name="myfile" />
+            <button type="submit">Upload File</button>
+        </form>
+    `);
+});
+
+//Setp-5 : File Upload Endpoint
+app.post('/upload', upload.single('myfile'), (req, res) => {
+    console.log(req.file);
+    res.send('File uploaded successfully: ' + req.file.filename);
+});
+
+//Step-6: Start the server
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
