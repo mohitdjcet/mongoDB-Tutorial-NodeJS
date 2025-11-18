@@ -1,42 +1,26 @@
 import express from 'express';
-import { MongoClient } from 'mongodb';
+import cors from 'cors';
 
-// Initialize Express app
 const app = express();
-const port = 3000;
+const PORT = 5001;
 
-// MongoDB Connection
-const url = "mongodb://localhost:27017";
-const dbName = "studentDB";
+app.use(cors({
+    origin: ['http://localhost:3000','https:xyz.com'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+})); 
 
-//crete a new MongoClient
-const client = new MongoClient(url);
+//menual cors configuration
+// app.use((req, res, next) => {
+//     res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+//     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+//     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+//     next();
+// }
 
-// Middleware to parse JSON
-app.use(express.json());
+app.get('/api/message', (req, res) => {
+    res.json({ message: 'Hello from the Node.js!' });
+});
 
-//Routes
-app.get('/data',async (req , res)=>{
-    try{
-        // Connect to MongoDB
-        await client.connect();
-        console.log("Connected correctly to server");
-
-        const db = client.db(dbName);
-        const collection = db.collection('students');
-
-        // Fetch all documents
-        const data = await collection.find({}).toArray();
-
-        res.json(data);
-
-    }catch(err){
-        console.error(err);
-        res.status(500).send({error: 'An error occurred'});
-    }
-})
-
-// Start the server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
