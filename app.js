@@ -1,88 +1,51 @@
 import express from 'express';
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import nodemailer from 'nodemailer';
+import bodyParser from 'body-parser';
+import cors from 'cors';
 
 const app = express();
-app.use(express.json());
+const PORT = 3000;
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/jwtdemo')
-    .then(() => console.log('MongoDB connected'))
-    .catch(err => console.log(err));
+app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// User Schema
-const userSchema = new mongoose.Schema({
-    name: String,
-    email: { type: String, unique: true },
-    password: String
-});
-const User = mongoose.model('User', userSchema);
+// Email sending route
+app.post('/send-email', async (req, res) => {
+    const { name, email, message } = req.body;
 
-//Signup API
-app.post('/signup', async (req, res) => {
-    const { name, email, password } = req.body;
+    try {
+        // Create a transporter
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth:{
+                user: 'mohitdecodes@gmail.com',
+                pass: 'kojt wger oipc fjmd',
+            }
+        });
+        
+        // Email options
+        const mailOptions = {
+            from: "mohitdecodes@gmail.com",
+            to: "mohit.djcet@gmail.com",
+            subject: `New message from Mohit's Portfolio`,
+            // text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
+            html: `<h3>New message from Mohit's Portfolio</h3>
+                   <p><strong>Name:</strong> ${name}</p>
+                   <p><strong>Email:</strong> ${email}</p>
+                   <p><strong>Message:</strong><br/> ${message}</p>`
+        };
+        // Send email
+        await transporter.sendMail(mailOptions);
 
-    //already user?
-    const exist = await User.findOne({ email });
-    if (exist) {
-        return res.json({ message: 'User already exists' });
+        res.status(200).json({ success: true, message: 'Email sent successfully' });
+
+    } catch (error) {
+        console.error('Error sending email:', error);
+        res.status(500).json({ success: false, message: 'Failed to send email' });
     }
-    
-    //hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    await User.create({ name, email, password: hashedPassword });
-
-    res.json({ message: 'User created successfully' });
-});
-
-// Login API
-app.post('/login', async (req, res) => {
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email });
-    if (!user) {
-        return res.json({ message: 'User not found' });
-    }
-
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-        return res.json({ message: 'Invalid credentials' });
-    }
-
-    // Generate JWT
-    const token = jwt.sign({ id: user._id }, "secretkey123",{
-        expiresIn: '1h'
-    });
-
-    res.json({ message: 'Login successful', token });
 });
 
-//Middleware to verify token
-const auth = (req, res, next) => {
-    const token = req.headers.authorization;
-
-    if (!token) {
-        return res.json({ message: 'No token provided' });
-    }
-
-    try{
-        const data = jwt.verify(token, "secretkey123");
-        req.userId = data.id;
-        next();
-
-    } catch (err) {
-        return res.json({ message: 'Invalid token' });
-    }
-}
-
-// Protected Route
-app.get('/profile', auth, async (req, res) => {
-    const user = await User.findById(req.userId).select('-password');
-    res.json({ msg:"Profile Loaded" ,user });
-});
-
-app.listen(3000, () => {
-    console.log('Server running on port 3000');
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
