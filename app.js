@@ -1,42 +1,88 @@
 import express from 'express';
-import { MongoClient } from 'mongodb';
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
-// Initialize Express app
 const app = express();
-const port = 3000;
-
-// MongoDB Connection
-const url = "mongodb://localhost:27017";
-const dbName = "studentDB";
-
-//crete a new MongoClient
-const client = new MongoClient(url);
-
-// Middleware to parse JSON
 app.use(express.json());
 
-//Routes
-app.get('/data',async (req , res)=>{
-    try{
-        // Connect to MongoDB
-        await client.connect();
-        console.log("Connected correctly to server");
+// Connect to MongoDB
+mongoose.connect('mongodb://localhost:27017/jwtdemo')
+    .then(() => console.log('MongoDB connected'))
+    .catch(err => console.log(err));
 
-        const db = client.db(dbName);
-        const collection = db.collection('students');
+// User Schema
+const userSchema = new mongoose.Schema({
+    name: String,
+    email: { type: String, unique: true },
+    password: String
+});
+const User = mongoose.model('User', userSchema);
 
-        // Fetch all documents
-        const data = await collection.find({}).toArray();
+//Signup API
+app.post('/signup', async (req, res) => {
+    const { name, email, password } = req.body;
 
-        res.json(data);
-
-    }catch(err){
-        console.error(err);
-        res.status(500).send({error: 'An error occurred'});
+    //already user?
+    const exist = await User.findOne({ email });
+    if (exist) {
+        return res.json({ message: 'User already exists' });
     }
-})
+    
+    //hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-// Start the server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+    await User.create({ name, email, password: hashedPassword });
+
+    res.json({ message: 'User created successfully' });
+});
+
+// Login API
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+        return res.json({ message: 'User not found' });
+    }
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+        return res.json({ message: 'Invalid credentials' });
+    }
+
+    // Generate JWT
+    const token = jwt.sign({ id: user._id }, "secretkey123",{
+        expiresIn: '1h'
+    });
+
+    res.json({ message: 'Login successful', token });
+});
+
+//Middleware to verify token
+const auth = (req, res, next) => {
+    const token = req.headers.authorization;
+
+    if (!token) {
+        return res.json({ message: 'No token provided' });
+    }
+
+    try{
+        const data = jwt.verify(token, "secretkey123");
+        req.userId = data.id;
+        next();
+
+    } catch (err) {
+        return res.json({ message: 'Invalid token' });
+    }
+}
+
+// Protected Route
+app.get('/profile', auth, async (req, res) => {
+    const user = await User.findById(req.userId).select('-password');
+    res.json({ msg:"Profile Loaded" ,user });
+});
+
+app.listen(3000, () => {
+    console.log('Server running on port 3000');
 });
